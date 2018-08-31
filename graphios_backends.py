@@ -523,25 +523,34 @@ class influxdb(object):
         """ Connect to influxdb and send metrics """
         series = []
         for m in metrics:
-            if self.whitelist is not None and m.SERVICEDESC not in self.whitelist:
-                continue
+            if self.whitelist is not None:
+                for item in self.whitelist:
+                    if item not in m.SERVICEDESC:
+                        continue
 
-            dt = datetime.datetime.utcfromtimestamp(m.TIMET).isoformat() + "Z"
+            dt = datetime.datetime.utcfromtimestamp(int(m.TIMET)).isoformat() + "Z"
+            try:
+                value = int(m.VALUE)
+            except:
+                value = float(m.VALUE)
+
             tmp_series = {"measurement": m.SERVICEDESC,
                             "time": dt,
                             "tags": {
-                                "host": m.HOSTNAME}
+                                "host": m.HOSTNAME },
                             "fields": {
-                                m.LABEL: m.VALUE}}
-            for k,v in self.extra_tags.items():
-                if k not in tmp_series["tags"]:
-                    tmp_series["tags"][k] = v
+                                m.LABEL: value }}
+            if self.extra_tags is not None:
+                for k,v in self.extra_tags.items():
+                    if k not in tmp_series["tags"]:
+                        tmp_series["tags"][k] = v
 
             series.append(tmp_series)
 
         try:
             self.influxdb.write_points(series)
-        except:
+        except Exception as e:
+            print str(e)
             return 0
 
         return len(series)
