@@ -525,10 +525,16 @@ class influxdb(object):
         """ Connect to influxdb and send metrics """
         series = []
         for m in metrics:
+            matching = False
             if self.whitelist is not None:
                 for item in self.whitelist:
-                    if item not in m.SERVICEDESC:
-                        continue
+                    if item in m.SERVICEDESC:
+                        matching = True
+            else:
+                matching = True
+
+            if not matching:
+                continue
 
             dt = datetime.datetime.utcfromtimestamp(int(m.TIMET)).isoformat() + "Z"
             try:
