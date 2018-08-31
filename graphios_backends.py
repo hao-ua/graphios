@@ -11,11 +11,13 @@ import urllib2
 import json
 import os
 import datetime
+import urllib3
 from statsd import StatsClient, TCPStatsClient
 from influxdb import InfluxDBClient
 # ###########################################################
 # #### Librato Backend
 
+urllib3.disable_warnings()
 
 class librato(object):
     def __init__(self, cfg):
@@ -532,7 +534,11 @@ class influxdb(object):
             try:
                 value = int(m.VALUE)
             except:
+                value = 0
+            try:
                 value = float(m.VALUE)
+            except:
+                continue
 
             tmp_series = {"measurement": m.SERVICEDESC,
                             "time": dt,
